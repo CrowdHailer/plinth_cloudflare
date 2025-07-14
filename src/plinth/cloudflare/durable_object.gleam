@@ -1,5 +1,6 @@
+import gleam/javascript/array.{type Array}
 import gleam/javascript/promise.{type Promise}
-import gleam/json
+import gleam/json.{type Json}
 
 pub type Namespace
 
@@ -7,7 +8,7 @@ pub type Namespace
 pub fn id_from_name(namespace: Namespace, name: String) -> Id
 
 @external(javascript, "../../plinth_cloudflare_durable_object_ffi.mjs", "new_unique_id")
-fn do_new_unique_id(jurisdiction: json.Json) -> Id
+fn do_new_unique_id(jurisdiction: Json) -> Id
 
 pub fn new_unique_id(jurisdiction) {
   let options =
@@ -22,7 +23,7 @@ pub fn new_unique_id(jurisdiction) {
 pub fn id_from_string(namespace: Namespace, id: String) -> Id
 
 @external(javascript, "../../plinth_cloudflare_durable_object_ffi.mjs", "get")
-pub fn do_get(namespace: Namespace, id: Id, options: json.Json) -> Stub
+pub fn do_get(namespace: Namespace, id: Id, options: Json) -> Stub
 
 pub fn get(namespace, id, location_hint) {
   let options =
@@ -49,7 +50,18 @@ pub fn name(id: Id) -> String
 pub type Stub
 
 @external(javascript, "../../plinth_cloudflare_durable_object_ffi.mjs", "stub_id")
-pub fn stub_id(state: Stub) -> Id
+pub fn stub_id(stub: Stub) -> Id
+
+@external(javascript, "../../plinth_cloudflare_durable_object_ffi.mjs", "rpc")
+fn do_rpc(
+  stub: Stub,
+  method: String,
+  args: Array(Json),
+) -> Promise(Result(Json, String))
+
+pub fn rpc(stub, method, args) {
+  do_rpc(stub, method, array.from_list(args))
+}
 
 pub type State
 

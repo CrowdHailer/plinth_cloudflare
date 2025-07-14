@@ -8,6 +8,15 @@ export function get(env, key) {
   }
 }
 
+export function cast_to_d1_database(raw) {
+  const isDatabase = raw &&
+    typeof raw.prepare === 'function' &&
+    typeof raw.batch === 'function' &&
+    typeof raw.exec === 'function' &&
+    typeof raw.withSession === 'function';
+  return isDatabase ? new Ok(raw) : new Error()
+}
+
 export function cast_to_durable_object_namespace(raw) {
   const isNamespace = raw &&
     typeof raw.idFromName === 'function' &&
