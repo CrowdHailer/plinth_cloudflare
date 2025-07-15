@@ -6,6 +6,7 @@ import gleam/javascript/promise.{type Promise}
 import gleam/json.{type Json}
 import gleam/list
 import gleam/option.{type Option, None}
+import plinth/cloudflare/utils
 
 pub type Entrypoint
 
@@ -52,7 +53,7 @@ pub type StepConfig {
 
 fn config_to_arg(config) {
   let StepConfig(retries:, timeout:) = config
-  sparse([
+  utils.sparse([
     #("retries", json.nullable(retries, retries_to_arg)),
     #("timeout", json.nullable(timeout, duration_to_arg)),
   ])
@@ -73,7 +74,7 @@ pub type Retries {
 
 fn retries_to_arg(retries) {
   let Retries(limit:, delay:, backoff:) = retries
-  sparse([
+  utils.sparse([
     #("limit", json.int(limit)),
     #("delay", duration_to_arg(delay)),
     #("backoff", backoff_to_arg(backoff)),
@@ -120,7 +121,7 @@ pub fn wait_for_event(
   timeout: Option(Duration),
 ) {
   let options =
-    sparse([
+    utils.sparse([
       #("type", json.string(type_)),
       #("timeout", json.nullable(timeout, duration_to_arg)),
     ])
@@ -153,7 +154,7 @@ pub type CreateOptions {
 
 fn create_options_to_arg(options) {
   let CreateOptions(id:, params:) = options
-  sparse([#("id", json.nullable(id, json.string)), #("params", params)])
+  utils.sparse([#("id", json.nullable(id, json.string)), #("params", params)])
 }
 
 @external(javascript, "../../plinth_cloudflare_workflow_ffi.mjs", "get")
@@ -189,7 +190,7 @@ fn do_send_event(instance: Instance, options: json.Json) -> Promise(Nil)
 pub fn send_event(instance, type_, payload) {
   do_send_event(
     instance,
-    sparse([#("type", json.string(type_)), #("payload", payload)]),
+    utils.sparse([#("type", json.string(type_)), #("payload", payload)]),
   )
 }
 
@@ -225,12 +226,4 @@ fn human(quantity, unit) {
     1 -> ""
     _ -> "s"
   }
-}
-
-fn sparse(entries: List(#(String, json.Json))) -> json.Json {
-  list.filter(entries, fn(entry) {
-    let #(_, v) = entry
-    v != json.null()
-  })
-  |> json.object
 }

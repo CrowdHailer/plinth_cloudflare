@@ -1,6 +1,9 @@
+import gleam/dynamic.{type Dynamic}
+import gleam/dynamic/decode
 import gleam/javascript/array.{type Array}
 import gleam/javascript/promise.{type Promise}
 import gleam/json.{type Json}
+import plinth/cloudflare/utils
 
 pub type Namespace
 
@@ -23,7 +26,7 @@ pub fn new_unique_id(jurisdiction) {
 pub fn id_from_string(namespace: Namespace, id: String) -> Id
 
 @external(javascript, "../../plinth_cloudflare_durable_object_ffi.mjs", "get")
-pub fn do_get(namespace: Namespace, id: Id, options: Json) -> Stub
+fn do_get(namespace: Namespace, id: Id, options: Json) -> Stub
 
 pub fn get(namespace, id, location_hint) {
   let options =
@@ -72,7 +75,7 @@ pub type State
 pub fn block_concurrency_while(
   state: State,
   action: fn() -> Promise(t),
-) -> Promise(t)
+) -> NonConcurrentPromise(t)
 
 @external(javascript, "../../plinth_cloudflare_durable_object_ffi.mjs", "state_id")
 pub fn state_id(state: State) -> Id
@@ -81,3 +84,135 @@ pub fn state_id(state: State) -> Id
 pub fn storage(state: State) -> Storage
 
 pub type Storage
+
+@external(javascript, "../../plinth_cloudflare_durable_object_ffi.mjs", "sql")
+pub fn sql(storage: Storage) -> Sql
+
+pub type Sql
+
+pub type SqlStorageCursor
+
+@external(javascript, "../../plinth_cloudflare_durable_object_ffi.mjs", "exec")
+fn do_exec(
+  storage: Sql,
+  query: String,
+  bindings: Array(String),
+) -> SqlStorageCursor
+
+pub fn exec(storage, query, bindings) {
+  do_exec(storage, query, array.from_list(bindings))
+}
+
+@external(javascript, "../../plinth_cloudflare_durable_object_ffi.mjs", "database_size")
+pub fn database_size(storage: Sql) -> Int
+
+pub type GetOptions {
+  GetOptions(
+    // Default false
+    allow_concurrency: Bool,
+    // Default false
+    no_cache: Bool,
+  )
+}
+
+pub fn get_default() {
+  GetOptions(allow_concurrency: False, no_cache: False)
+}
+
+fn get_options_to_arg(options) {
+  let GetOptions(allow_concurrency:, no_cache:) = options
+  utils.sparse([
+    #("allowConcurrency", json.bool(allow_concurrency)),
+    #("noCache", json.bool(no_cache)),
+  ])
+}
+
+@external(javascript, "../../plinth_cloudflare_durable_object_ffi.mjs", "get_one")
+fn do_get_one(
+  storage: Storage,
+  key: String,
+  options: Json,
+) -> NonConcurrentPromise(Result(Dynamic, Nil))
+
+// KV is not sync
+pub fn get_one(storage: Storage, key: String, options: GetOptions) {
+  do_get_one(storage, key, get_options_to_arg(options))
+}
+
+@external(javascript, "../../plinth_cloudflare_durable_object_ffi.mjs", "get_many")
+fn do_get_many(
+  storage: Storage,
+  keys: Array(String),
+  options: Json,
+) -> NonConcurrentPromise(Result(Dynamic, Nil))
+
+pub fn get_many(storage, keys, options) {
+  let keys = array.from_list(keys)
+  let args = get_options_to_arg(options)
+  do_get_many(storage, keys, args)
+}
+
+pub type UpdateOptions {
+  UpdateOptions(allow_unconfirmed: Bool, no_cache: Bool)
+}
+
+pub fn update_default() {
+  UpdateOptions(allow_unconfirmed: False, no_cache: False)
+}
+
+fn update_options_to_arg(options) {
+  let UpdateOptions(allow_unconfirmed:, no_cache:) = options
+  utils.sparse([
+    #("allowUnconfirmed", json.bool(allow_unconfirmed)),
+    #("noCache", json.bool(no_cache)),
+  ])
+}
+
+@external(javascript, "../../plinth_cloudflare_durable_object_ffi.mjs", "put_one")
+fn do_put_one(
+  storage: Storage,
+  key: String,
+  value: Json,
+  options: Json,
+) -> NonConcurrentPromise(Nil)
+
+pub fn put_one(storage, key, value, options) {
+  let options = update_options_to_arg(options)
+  do_put_one(storage, key, value, options)
+}
+
+@external(javascript, "../../plinth_cloudflare_durable_object_ffi.mjs", "get_alarm")
+pub fn get_alarm(storage: Storage) -> NonConcurrentPromise(Result(Int, Nil))
+
+@external(javascript, "../../plinth_cloudflare_durable_object_ffi.mjs", "set_alarm")
+pub fn set_alarm(
+  storage: Storage,
+  scheduled_time: Int,
+) -> NonConcurrentPromise(Nil)
+
+@external(javascript, "../../plinth_cloudflare_durable_object_ffi.mjs", "delete_alarm")
+pub fn delete_alarm(storage: Storage) -> NonConcurrentPromise(Nil)
+
+pub type AlarmInvocationInfo {
+  AlarmInvocationInfo(retry_count: Int, is_retry: Bool)
+}
+
+pub fn alarm_invocation_info_decoder() {
+  use retry_count <- decode.field("retryCount", decode.int)
+  use is_retry <- decode.field("isRetry", decode.bool)
+  decode.success(AlarmInvocationInfo(retry_count:, is_retry:))
+}
+
+pub type NonConcurrentPromise(t)
+
+@external(javascript, "../../plinth_cloudflare_durable_object_ffi.mjs", "await_")
+pub fn await(
+  p: NonConcurrentPromise(t),
+  then: fn(t) -> NonConcurrentPromise(u),
+) -> NonConcurrentPromise(u)
+
+@external(javascript, "../../plinth_cloudflare_durable_object_ffi.mjs", "resolve")
+pub fn resolve(value: t) -> NonConcurrentPromise(t)
+
+@external(javascript, "../../plinth_cloudflare_durable_object_ffi.mjs", "id")
+pub fn to_promise(p: NonConcurrentPromise(t)) -> Promise(t)

@@ -21,7 +21,7 @@ pub fn bind(statement, values) {
 }
 
 pub type RunResult {
-  RunResult(success: Bool, meta: Dynamic, results: Result(Array(Dynamic), Nil))
+  RunResult(success: Bool, meta: Dynamic, results: Array(Dynamic))
 }
 
 // Errors if syntax error or selecting a field that doesn't exist
