@@ -84,7 +84,6 @@ pub fn r2_test() {
     |> request.set_path("/r2/blobby")
   use response <- promise.await(miniflare.fetch(mf, request))
   let assert Ok(response) = response
-  echo response
   assert response.status == 200
   assert response.body == "Crinkley Bottom"
 

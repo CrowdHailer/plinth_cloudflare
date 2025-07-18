@@ -8,6 +8,7 @@
 Refer to the tests for running examples.
 
 ```sh
+npm i -s miniflare@4
 gleam add miniflare@1
 ```
 
