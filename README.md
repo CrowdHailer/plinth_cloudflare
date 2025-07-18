@@ -1,26 +1,97 @@
-# plinth_cloudflare
+# Plinth Cloudflare
+
+Run you Gleam programs on Cloudflare's "World Computer"/[ Developer Platform](https://developers.cloudflare.com/workers/)
 
 [![Package Version](https://img.shields.io/hexpm/v/plinth_cloudflare)](https://hex.pm/packages/plinth_cloudflare)
 [![Hex Docs](https://img.shields.io/badge/hex-docs-ffaff3)](https://hexdocs.pm/plinth_cloudflare/)
 
+## 🚀 Get started
+
 ```sh
 gleam add plinth_cloudflare@1
+npm i --save-dev wrangler@4
 ```
-```gleam
+
+src/my_app.gleam
+```rs
+pub fn fetch(request, env: dynamic.Dynamic, ctx: worker.Context) {
+  let request = conversation.to_gleam_request(request)
+  use response <- promise.map(do_fetch(request, env, ctx))
+  conversation.to_js_response(response)
+}
+
+pub fn do_fetch(request, env, ctx) {
+  response.new(200)
+  |> response.set_body( "Hello Plinth!")
+  |> promise.resolve
+}
+```
+
+src/index.js
+```js
+import { fetch } from "./my_app.mjs";
+
+export default {
+  async fetch(request, env, ctx) {
+    return fetch(request, env, ctx);
+  },
+};
+```
+
+wrangler.toml
+```toml
+name = "my_app"
+main = "./build/dev/javascript/my_app/index.js"
+compatibility_date = "2025-06-17"
+```
+
+Run locally with `npx wrangler dev`. Deploy with `npx wrangler deploy`
+
+- Your applications entrypoint is the `fetch` function of your entrypoint worker.
+  It is necessary to export a `fetch` function from your `index.js` file.
+  Your gleam project doesn't have to use the name `fetch` but I often do for consistency
+
+## 🔩 Accessing the platform
+
+Why build on cloudflare? Because it has a variety of batteries included services.
+These services are made available to your workers through bindings.
+Bindings are configured in your `wrangler.toml` file.
+
+The bound resources are available on the env passed to the fetch function.
+You can access them using the `bindings` module.
+
+For example, to access an R2 bucket:
+
+```rs
 import plinth/cloudflare/bindings
 import plinth/cloudflare/r2
 
 pub fn fetch(request, env)  {
   let assert Ok(bucket) = bindings.r2_bucket(env, "MY_BUCKET")
-  use return <- promise.await(r2.get(bucket, "my-key", options))
+  use return <- promise.await(r2.get(bucket, key, r2.get_options()))
   case return {
-    Ok(content) ->
-    Error(_) -> {
-      use return <- promise.await(r2.put(bucket, "my-key", options))
+    Ok(body) -> {
+      use raw <- promise.await(r2.read_bytes(body))
+      let assert Ok(body) = raw
+      response.new(200)
+      |> response.set_body(body)
+      |> promise.resolve()
     }
+    Error(_) ->
+      response.new(404)
+      |> response.set_body(<<"not found":utf8>>)
+      |> promise.resolve()
   }
 }
 ```
+
+Plinth Cloudflare supports the following bindings:
+- [D1](https://developers.cloudflare.com/d1/)
+- [Durable Objects](https://developers.cloudflare.com/durable-objects/)
+- [R2](https://developers.cloudflare.com/r2/)
+- [Workflows](https://developers.cloudflare.com/workers/wrangler/workflows/)
+
+Pull requests are welcome for the [remaining bindings](https://developers.cloudflare.com/workers/runtime-apis/bindings/). 
 
 Further documentation can be found at <https://hexdocs.pm/plinth_cloudflare>.
 
@@ -31,7 +102,16 @@ gleam run   # Run the project
 gleam test  # Run the tests
 ```
 
-## Notes
+## Notes on the "world computer"
+
+Cloudflare's platform is an interesting platform that abstracts away the physical hardware more than most.
+For example if you build an actor on a durable object that will live for ever an be migrated for you potentially all around the world.
+
+This is different to actors you might build on the BEAM.
+The BEAM is very capable for building large distributed systems, however the core abstractions of processes and GenServers are bound to a machine.
+If the machine running a process dies it the applications responsiblity to handle restart, data durability and consistency.
+
+The following sections are some rough notes I have made build on cloudflare. I hope to turn them into more structured guidance with time.
 
 ### Reusing Id's
 
@@ -150,3 +230,4 @@ If y was purely derived from x then it would be fine to calculate it outside of 
 ### Do steps that are not awaited on execute in parallel
 
 The docs are not clear on this but do mention the use of promise await/all
+
