@@ -1,9 +1,15 @@
 import conversation
+import gleam/bit_array
 import gleam/http
 import gleam/http/request
 import gleam/http/response
+import gleam/javascript/array
 import gleam/javascript/promise.{type Promise}
+import gleam/json
+import gleam/list
+import gleam/option.{None}
 import plinth/cloudflare/bindings
+import plinth/cloudflare/queue
 import plinth/cloudflare/r2
 
 pub fn fetch(request, env, context) -> Promise(conversation.JsResponse) {
@@ -86,6 +92,33 @@ fn handle(request, env, _context) {
     //   // use return <- promise.await(r2.list(bucket, key, r2.get_options()))
     //   todo as "implement list"
     // }
+    ["queue"] ->
+      case request.method {
+        http.Post -> {
+          let assert Ok(the_queue) = bindings.queue(env, "MY_QUEUE")
+          let assert Ok(body) = request.body |> bit_array.to_string()
+          let message = json.object([#("text", json.string(body))])
+          use Nil <- promise.await(queue.send(the_queue, message, None, None))
+          response.new(201)
+          |> response.set_body(<<"Sent":utf8>>)
+          |> promise.resolve()
+        }
+        _ ->
+          response.new(405)
+          |> response.set_body(<<"method not allowed":utf8>>)
+          |> promise.resolve()
+      }
     _ -> panic
   }
+}
+
+pub fn queue(batch, _env) {
+  queue.messages(batch)
+  |> array.to_list
+  |> list.map(fn(message) {
+    queue.body(message)
+    |> echo
+    queue.timestamp(message)
+    |> echo
+  })
 }

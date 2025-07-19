@@ -27,6 +27,14 @@ export function cast_to_durable_object_namespace(raw) {
   return isNamespace ? new Ok(raw) : new Error()
 }
 
+export function cast_to_queue(raw) {
+  const isQueue = raw &&
+    typeof raw.send === 'function' &&
+    typeof raw.sendBatch === 'function';
+  return isQueue ? new Ok(raw) : new Error()
+}
+
+
 export function cast_to_workflow(raw) {
   const isWorkflow = raw &&
     typeof raw.create === 'function' &&

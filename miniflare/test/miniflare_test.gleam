@@ -3,6 +3,7 @@ import gleam/http
 import gleam/http/request
 import gleam/javascript/promise
 import gleam/json
+import gleam/option.{None}
 import gleeunit
 import miniflare
 
@@ -87,5 +88,38 @@ pub fn r2_test() {
   assert response.status == 200
   assert response.body == "Crinkley Bottom"
 
+  promise.resolve(Nil)
+}
+
+pub fn queue_test() {
+  let worker =
+    miniflare.es("./build/dev/javascript/miniflare/test_worker_harness.js")
+  let worker =
+    miniflare.WorkerOptions(
+      ..worker,
+      queue_producers: dict.from_list([
+        #("MY_QUEUE", miniflare.QueueProducerOptions("MyQueue", None)),
+      ]),
+      queue_consumers: dict.from_list([
+        #(
+          "MyQueue",
+          miniflare.QueueConsumerOptions(None, None, None, None, None),
+        ),
+      ]),
+    )
+  let mf = miniflare.new(miniflare.default(), [worker])
+
+  let request =
+    request.new()
+    |> request.set_method(http.Post)
+    |> request.set_path("/queue")
+    |> request.set_body("Alton Towers")
+  use response <- promise.await(miniflare.fetch(mf, request))
+  let assert Ok(response) = response
+  echo response
+  assert response.status == 201
+  use _ <- promise.await(promise.wait(2000))
+  // This test doesn't assert that the queue consumer has run, I just watched the logs.
+  // Need a durable object or something else to make the test more rigorous.
   promise.resolve(Nil)
 }

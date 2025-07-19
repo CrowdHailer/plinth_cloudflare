@@ -9,6 +9,7 @@ import gleam/pair
 import plinth/cloudflare/d1
 import plinth/cloudflare/durable_object as do
 import plinth/cloudflare/r2
+import plinth/cloudflare/utils
 
 pub type ModuleRuleType {
   ESModule
@@ -66,6 +67,14 @@ pub type QueueProducerOptions {
   QueueProducerOptions(queue_name: String, delivery_delay: Option(Int))
 }
 
+fn queue_producer_options_to_arg(options) {
+  let QueueProducerOptions(queue_name, delivery_delay) = options
+  utils.sparse([
+    #("queueName", json.string(queue_name)),
+    #("deliveryDelay", json.nullable(delivery_delay, json.int)),
+  ])
+}
+
 pub type QueueConsumerOptions {
   QueueConsumerOptions(
     max_batch_size: Option(Int),
@@ -74,6 +83,23 @@ pub type QueueConsumerOptions {
     dead_letter_queue: Option(String),
     retry_delay: Option(Int),
   )
+}
+
+fn queue_consumer_options_to_arg(options) {
+  let QueueConsumerOptions(
+    max_batch_size,
+    max_batch_timeout,
+    max_retries,
+    dead_letter_queue,
+    retry_delay,
+  ) = options
+  utils.sparse([
+    #("maxBatchSize", json.nullable(max_batch_size, json.int)),
+    #("maxBatchTimeout", json.nullable(max_batch_timeout, json.int)),
+    #("maxRetries", json.nullable(max_retries, json.int)),
+    #("deadLetterQueue", json.nullable(dead_letter_queue, json.string)),
+    #("retryDelay", json.nullable(retry_delay, json.int)),
+  ])
 }
 
 pub type Modules {
@@ -124,8 +150,8 @@ pub type WorkerOptions {
     // assets_manifest_binding_name: Option(String),
     r2_buckets: Dict(String, String),
     // d1_databases: Option(Dict(String, String)),
-    // queue_producers: Option(Dict(String, QueueProducerOptions)),
-    // queue_consumers: Option(Dict(String, QueueConsumerOptions)),
+    queue_producers: Dict(String, QueueProducerOptions),
+    queue_consumers: Dict(String, QueueConsumerOptions),
     // directory: Option(String),
     // binding: Option(String),
     // asset_options: Option(Dict(String, String)),
@@ -146,6 +172,8 @@ fn empty() {
     compatibility_date: None,
     bindings: dict.new(),
     r2_buckets: dict.new(),
+    queue_producers: dict.new(),
+    queue_consumers: dict.new(),
   )
 }
 
@@ -164,6 +192,14 @@ fn worker_options_to_arg(opts: WorkerOptions) {
     #("compatibilityDate", option.map(opts.compatibility_date, json.string)),
     #("bindings", optional_dict(opts.bindings, id)),
     #("r2Buckets", optional_dict(opts.r2_buckets, json.string)),
+    #(
+      "queueProducers",
+      optional_dict(opts.queue_producers, queue_producer_options_to_arg),
+    ),
+    #(
+      "queueConsumers",
+      optional_dict(opts.queue_consumers, queue_consumer_options_to_arg),
+    ),
   ]
   |> list.filter_map(is_some_value)
   |> json.object
