@@ -113,6 +113,11 @@ If the machine running a process dies it the applications responsiblity to handl
 
 The following sections are some rough notes I have made build on cloudflare. I hope to turn them into more structured guidance with time.
 
+### Maximum outbound connections
+
+A single cloudflare worker can only have siz simultaneous outbound connections.
+Additional connections will be queued.
+
 ### Reusing Id's
 
 Getting an instance with the same Id will get access to the running flow, even if it has completed.

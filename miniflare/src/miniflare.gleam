@@ -140,7 +140,7 @@ pub type WorkerOptions {
     // default_persist_root: Option(String),
     // cache: Option(Bool),
     // cache_warn_usage: Option(Bool),
-    // durable_objects: Option(Dict(String, String)),
+    durable_objects: Dict(String, String),
     // kv_namespaces: Option(Dict(String, String)),
     // site_path: Option(String),
     // site_include: Option(List(String)),
@@ -171,14 +171,19 @@ fn empty() {
     modules_root: None,
     compatibility_date: None,
     bindings: dict.new(),
+    durable_objects: dict.new(),
     r2_buckets: dict.new(),
     queue_producers: dict.new(),
     queue_consumers: dict.new(),
   )
 }
 
-pub fn es(path) {
-  WorkerOptions(..empty(), script_path: Some(path))
+pub fn es(compatibility_date, path) {
+  WorkerOptions(
+    ..empty(),
+    compatibility_date: Some(compatibility_date),
+    script_path: Some(path),
+  )
 }
 
 fn worker_options_to_arg(opts: WorkerOptions) {
@@ -191,6 +196,7 @@ fn worker_options_to_arg(opts: WorkerOptions) {
     #("modulesRoot", option.map(opts.modules_root, json.string)),
     #("compatibilityDate", option.map(opts.compatibility_date, json.string)),
     #("bindings", optional_dict(opts.bindings, id)),
+    #("durableObjects", optional_dict(opts.durable_objects, json.string)),
     #("r2Buckets", optional_dict(opts.r2_buckets, json.string)),
     #(
       "queueProducers",

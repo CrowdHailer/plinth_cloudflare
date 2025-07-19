@@ -14,7 +14,7 @@ pub fn main() -> Nil {
 pub fn simple_worker_test() {
   let mf =
     miniflare.new(miniflare.default(), [
-      miniflare.es("./test/simple_worker.mjs"),
+      miniflare.es("2025-06-17", "./test/simple_worker.mjs"),
     ])
   let request = request.new()
   use response <- promise.await(miniflare.fetch(mf, request))
@@ -26,7 +26,10 @@ pub fn simple_worker_test() {
 
 pub fn bindings_test() {
   let worker =
-    miniflare.es("./build/dev/javascript/miniflare/test_worker_harness.js")
+    miniflare.es(
+      "2025-06-17",
+      "./build/dev/javascript/miniflare/test_worker_harness.js",
+    )
   let worker =
     miniflare.WorkerOptions(
       ..worker,
@@ -45,7 +48,10 @@ pub fn bindings_test() {
 
 pub fn r2_test() {
   let worker =
-    miniflare.es("./build/dev/javascript/miniflare/test_worker_harness.js")
+    miniflare.es(
+      "2025-06-17",
+      "./build/dev/javascript/miniflare/test_worker_harness.js",
+    )
   let worker =
     miniflare.WorkerOptions(
       ..worker,
@@ -93,7 +99,10 @@ pub fn r2_test() {
 
 pub fn queue_test() {
   let worker =
-    miniflare.es("./build/dev/javascript/miniflare/test_worker_harness.js")
+    miniflare.es(
+      "2025-06-17",
+      "./build/dev/javascript/miniflare/test_worker_harness.js",
+    )
   let worker =
     miniflare.WorkerOptions(
       ..worker,
