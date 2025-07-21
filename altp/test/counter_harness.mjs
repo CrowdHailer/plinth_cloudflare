@@ -1,6 +1,6 @@
 import { Actor } from "./altp/actor.mjs";
 import { init, handle } from "./counter.mjs";
-import { fetch } from "./altp_test.mjs";
+import { fetch } from "./counter_worker.mjs";
 
 
 export class Counter extends Actor {

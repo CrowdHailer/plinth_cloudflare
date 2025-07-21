@@ -41,10 +41,10 @@ export class Actor extends DurableObject {
     // No alarm needs to be set here, the current handler will always set an alarm to check
     if (this.handling) return;
 
-    this.handling = true;
     const pending = this.mailbox.shift();
     // Put any alarms that might have happened in the mailbox
     if (pending) {
+      this.handling = true;
       const { payload, resolve } = pending;
       const message = resolve ? new Call(payload, resolve) : new Cast(payload);
       const next = await this.handle(this.state, message);

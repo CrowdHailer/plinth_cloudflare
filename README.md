@@ -111,6 +111,9 @@ This is different to actors you might build on the BEAM.
 The BEAM is very capable for building large distributed systems, however the core abstractions of processes and GenServers are bound to a machine.
 If the machine running a process dies it the applications responsiblity to handle restart, data durability and consistency.
 
+Should a permanent actor keep calls in the mailbox to callers who are transient?
+Should any callers be transient. Client has session id that it uses to reconnect, include idempotency key
+
 The following sections are some rough notes I have made build on cloudflare. I hope to turn them into more structured guidance with time.
 
 ### Maximum outbound connections
