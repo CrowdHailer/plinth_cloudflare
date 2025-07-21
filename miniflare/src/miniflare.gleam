@@ -51,17 +51,34 @@ pub type LogLevel {
   VERBOSE
 }
 
-pub type LogOptions {
-  LogOptions(prefix: Option(String), suffix: Option(String))
+fn log_level_to_int(level) {
+  case level {
+    NONE -> 0
+    ERROR -> 1
+    WARN -> 2
+    INFO -> 3
+    DEBUG -> 4
+    VERBOSE -> 5
+  }
 }
 
-pub type Log {
-  Log(level: Option(LogLevel), opts: Option(LogOptions))
+pub type Log
+
+@external(javascript, "./miniflare_ffi.mjs", "log")
+fn do_log(level: Json, options: Json) -> Log
+
+pub fn log(level, prefix, suffix) {
+  let level = log_level_to_int(level)
+  let options =
+    utils.sparse([
+      #("prefix", json.nullable(prefix, json.string)),
+      #("suffix", json.nullable(suffix, json.string)),
+    ])
+  do_log(json.int(level), options)
 }
 
-pub type NoOpLog {
-  NoOpLog
-}
+@external(javascript, "./miniflare_ffi.mjs", "no_op_log")
+pub fn no_op_log() -> Log
 
 pub type QueueProducerOptions {
   QueueProducerOptions(queue_name: String, delivery_delay: Option(Int))
@@ -260,7 +277,7 @@ fn shared_options_to_entries(opts: SharedOptions) {
     #("httpsCertPath", option.map(opts.https_cert_path, json.string)),
     #("inspectorPort", option.map(opts.inspector_port, json.int)),
     #("verbose", option.map(opts.verbose, json.bool)),
-    // #("log", option.map(opts.log, log_to_json)),
+    #("log", option.map(opts.log, unsafe_to_json)),
     #("upstream", option.map(opts.upstream, json.string)),
     // #("cf", option.map(opts.cf, json.object)),
     #("liveReload", option.map(opts.live_reload, json.bool)),
@@ -417,8 +434,12 @@ pub fn get_r2_bucket(
   binding_name: String,
   worker_name: Option(String),
 ) -> Promise(r2.Bucket)
+
 // @external(javascript, "./miniflare_ffi.mjs", "dispose")
 // pub fn dispose(miniflare: Miniflare) -> Promise(Nil)
 
 // @external(javascript, "./miniflare_ffi.mjs", "get_cf")
 // pub fn get_cf(miniflare: Miniflare) -> Promise(Dict(String, Dynamic))
+
+@external(javascript, "./miniflare_ffi.mjs", "unsafe_to_json")
+pub fn unsafe_to_json(any: a) -> Json
