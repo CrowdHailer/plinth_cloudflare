@@ -1,6 +1,6 @@
 # 🔥 Miniflare
 
-**Miniflare* is a simulator for developing and testing [Cloudflare Workers](https://workers.cloudflare.com/). The runtime is powered by [workerd](https://github.com/cloudflare/workerd) and opensource JavaScript/Wasm [server first runtime](https://blog.cloudflare.com/workerd-open-source-workers-runtime/).
+**Miniflare** is a simulator for developing and testing [Cloudflare Workers](https://workers.cloudflare.com/). The runtime is powered by [workerd](https://github.com/cloudflare/workerd) and opensource JavaScript/Wasm [server first runtime](https://blog.cloudflare.com/workerd-open-source-workers-runtime/).
 
 [![Package Version](https://img.shields.io/hexpm/v/miniflare)](https://hex.pm/packages/miniflare)
 [![Hex Docs](https://img.shields.io/badge/hex-docs-ffaff3)](https://hexdocs.pm/miniflare/)

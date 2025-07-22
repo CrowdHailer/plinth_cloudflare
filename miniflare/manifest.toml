@@ -10,7 +10,7 @@ packages = [
   { name = "gleam_stdlib", version = "0.62.0", build_tools = ["gleam"], requirements = [], otp_app = "gleam_stdlib", source = "hex", outer_checksum = "DC8872BC0B8550F6E22F0F698CFE7F1E4BDA7312FDEB40D6C3F44C5B706C8310" },
   { name = "gleeunit", version = "1.6.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "gleeunit", source = "hex", outer_checksum = "63022D81C12C17B7F1A60E029964E830A4CBD846BBC6740004FC1F1031AE0326" },
   { name = "plinth", version = "0.7.1", build_tools = ["gleam"], requirements = ["gleam_javascript", "gleam_json", "gleam_stdlib"], otp_app = "plinth", source = "hex", outer_checksum = "63BB36AACCCCB82FBE46A862CF85CB88EBE4EF280ECDBAC4B6CB042340B9E1D8" },
-  { name = "plinth_cloudflare", version = "1.0.0", build_tools = ["gleam"], requirements = ["gleam_javascript", "gleam_json", "gleam_stdlib", "plinth"], source = "local", path = ".." },
+  { name = "plinth_cloudflare", version = "1.1.0", build_tools = ["gleam"], requirements = ["gleam_javascript", "gleam_json", "gleam_stdlib", "plinth"], otp_app = "plinth_cloudflare", source = "hex", outer_checksum = "08AB2AD6FB3EF04337AC093A5ADDDD76A38FB322242A4F93BE43BCDA8E173106" },
 ]
 
 [requirements]
@@ -21,4 +21,4 @@ gleam_javascript = { version = ">= 1.0.0 and < 2.0.0" }
 gleam_json = { version = ">= 3.0.2 and < 4.0.0" }
 gleam_stdlib = { version = ">= 0.44.0 and < 2.0.0" }
 gleeunit = { version = ">= 1.0.0 and < 2.0.0" }
-plinth_cloudflare = { path = ".." }
+plinth_cloudflare = { version = ">= 1.1.0 and < 2.0.0" }

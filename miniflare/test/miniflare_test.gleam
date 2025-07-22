@@ -125,7 +125,6 @@ pub fn queue_test() {
     |> request.set_body("Alton Towers")
   use response <- promise.await(miniflare.fetch(mf, request))
   let assert Ok(response) = response
-  echo response
   assert response.status == 201
   use _ <- promise.await(promise.wait(2000))
   // This test doesn't assert that the queue consumer has run, I just watched the logs.
