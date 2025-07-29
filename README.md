@@ -130,6 +130,15 @@ Workflows do upgrade if restarted.
 https://blog.cloudflare.com/workflows-ga-production-ready-durable-execution/
 
 
+### RPC calls dropped if worker completes
+
+A worker's lifetime is the duration of the request that it is handling.
+Any RPC call's made to a durable object are not actioned if the worker responds before awaiting the call.
+
+The simplest way to solve this is to await on all calls, and respond afterwards.
+To do things asynchronously it is possible to use `wait_until`, however there are no guarantees on this.
+I would recommend using a queue or workflow and awaiting the promise that pushes the item on the queue (or starts the workflow)
+
 ## Questions
 
 ### Do Gleam objects containing data types get serialized correctly?

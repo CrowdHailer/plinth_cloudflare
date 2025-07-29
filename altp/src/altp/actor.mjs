@@ -12,7 +12,7 @@ export class Actor extends DurableObject {
     this.handling = true;
     const self = this
     // constructor cannot be async so we use `.then` API.
-    this.init(ctx,env).then(async function (value) {
+    this.init(ctx, env).then(async function (value) {
       // this is not bound to the durable object instance when handling the promise callback
       // All handlings need to set and immediate alarm after to check
       await ctx.storage.setAlarm(Date.now() + 0);
